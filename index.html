@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Gasoil HC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border-radius: 15px; border: none; }
+        .btn-primary { background-color: #0056b3; border: none; }
+        .list-group-item { border-left: 5px solid #0056b3; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container py-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold">⛽ Control de Gasoil</h2>
+            <p class="text-muted small">Rellene los datos tras cada carga</p>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form id="gasoilForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Día</label>
+                            <input type="date" id="fecha" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Responsable</label>
+                            <input type="text" id="responsable" class="form-control" placeholder="Nombre del trabajador" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vehículo</label>
+                        <input type="text" id="vehiculo" class="form-control" placeholder="Matrícula o Modelo" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">KM Previos</label>
+                            <input type="number" id="km_previos" class="form-control" placeholder="Ej: 15264" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Litros</label>
+                            <input type="number" step="0.01" id="litros" class="form-control" placeholder="Ej: 63.5" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contador (Tras carga)</label>
+                        <input type="number" id="contador" class="form-control" placeholder="Contador actual" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">GUARDAR REGISTRO</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Historial</h4>
+            <div class="w-50">
+                <input type="date" id="filtroFecha" class="form-control form-control-sm" title="Filtrar por día">
+            </div>
+        </div>
+
+        <div id="listaRegistros" class="list-group">
+            <div class="text-center text-muted py-4">Cargando registros...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
