@@ -35,28 +35,24 @@ form.addEventListener('submit', async (e) => {
     let resultado;
 
     if (editandoID) {
-        // MODO EDICIÓN: .select() es clave para confirmar que la RLS permitió el cambio
         resultado = await supabaseClient
             .from('repostajes')
             .update(datos)
             .eq('id', editandoID)
             .select();
     } else {
-        // MODO CREACIÓN
         resultado = await supabaseClient
             .from('repostajes')
             .insert([datos])
             .select();
     }
 
-    // Si data viene vacío pero no hay error, suele ser fallo de permisos RLS
     if (resultado.error || (resultado.data && resultado.data.length === 0)) {
-        Swal.fire('¡Error!', 'No se pudo guardar. Revisa las políticas RLS (UPDATE/INSERT) en Supabase.', 'error');
+        Swal.fire('¡Error!', 'No se pudo guardar. Revisa las políticas RLS en Supabase.', 'error');
     } else {
         Swal.fire({
             icon: 'success',
             title: editandoID ? '¡Actualizado!' : '¡Registrado!',
-            text: 'Operación realizada con éxito',
             timer: 1500,
             showConfirmButton: false
         });
@@ -65,17 +61,14 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-// 3. Función para BORRAR
+// 3. Función para BORRAR (Confirmado que funciona)
 window.borrarRegistro = async function(id) {
     const result = await Swal.fire({
         title: '¿Borrar registro?',
-        text: "Esta acción eliminará el dato de la base de datos.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: 'Sí, eliminar'
     });
 
     if (result.isConfirmed) {
@@ -86,53 +79,40 @@ window.borrarRegistro = async function(id) {
             .select();
         
         if (error || (data && data.length === 0)) {
-            Swal.fire('Error', 'No se pudo eliminar. Revisa la política DELETE en Supabase.', 'error');
+            Swal.fire('Error', 'No se pudo eliminar.', 'error');
         } else {
-            Swal.fire('Eliminado', 'El registro ha sido borrado.', 'success');
+            Swal.fire('Eliminado', 'Registro borrado.', 'success');
             cargarRegistros();
         }
     }
 };
 
-// 4. Función para CARGAR y FILTRAR
+// 4. Función para CARGAR (Mejorada para evitar errores en el botón editar)
 async function cargarRegistros(fechaFiltro = null) {
-    let query = supabaseClient
-        .from('repostajes')
-        .select('*')
-        .order('fecha', { ascending: false });
-
-    if (fechaFiltro) {
-        query = query.eq('fecha', fechaFiltro);
-    } else {
-        query = query.limit(10);
-    }
+    let query = supabaseClient.from('repostajes').select('*').order('fecha', { ascending: false });
+    if (fechaFiltro) query = query.eq('fecha', fechaFiltro);
+    else query = query.limit(10);
 
     const { data, error } = await query;
-
-    if (error) {
-        console.error("Error cargando datos:", error.message);
-        return;
-    }
+    if (error) return;
 
     lista.innerHTML = '';
     
-    if (data.length === 0) {
-        lista.innerHTML = '<div class="text-center text-muted">No hay registros.</div>';
-        return;
-    }
-
     data.forEach(reg => {
         const item = document.createElement('div');
         item.className = 'list-group-item shadow-sm mb-2 rounded bg-white';
+        
+        // Convertimos el objeto a una cadena segura para el onclick
+        const datosSeguros = btoa(JSON.stringify(reg)); 
+
         item.innerHTML = `
             <div class="d-flex w-100 justify-content-between">
                 <h6 class="mb-1 text-primary fw-bold">${reg.vehiculo}</h6>
                 <small class="text-muted fw-bold">${reg.fecha}</small>
             </div>
-            <p class="mb-1"><b>${reg.responsable}</b> cargó <b>${reg.litros}L</b></p>
-            <small class="text-muted d-block mb-2">KM: ${reg.km_previos} → Contador: ${reg.contador_tras_carga}</small>
+            <p class="mb-1"><b>${reg.responsable}</b>: ${reg.litros}L</p>
             <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-warning" onclick='prepararEdicion(${JSON.stringify(reg)})'>Editar</button>
+                <button class="btn btn-sm btn-warning" onclick="prepararEdicion('${datosSeguros}')">Editar</button>
                 <button class="btn btn-sm btn-danger" onclick="borrarRegistro(${reg.id})">Borrar</button>
             </div>
         `;
@@ -140,8 +120,11 @@ async function cargarRegistros(fechaFiltro = null) {
     });
 }
 
-// 5. Preparar formulario para EDITAR
-window.prepararEdicion = function(reg) {
+// 5. Función para EDITAR (Corregida)
+window.prepararEdicion = function(datosB64) {
+    // Decodificamos los datos de forma segura
+    const reg = JSON.parse(atob(datosB64));
+    
     editandoID = reg.id;
     
     document.getElementById('fecha').value = reg.fecha;
@@ -157,7 +140,6 @@ window.prepararEdicion = function(reg) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// 6. Resetear formulario
 function resetearFormulario() {
     form.reset();
     editandoID = null;
@@ -165,8 +147,5 @@ function resetearFormulario() {
     submitBtn.classList.replace('btn-success', 'btn-primary');
 }
 
-// Eventos
 filtro.addEventListener('change', (e) => cargarRegistros(e.target.value));
-
-// Carga inicial
 cargarRegistros();
